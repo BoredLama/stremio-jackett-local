@@ -1,0 +1,38 @@
+{
+  "jackettKey": {
+    "title": "Jackett API Key",
+    "type": "string",
+    "default": "",
+    "required": true
+  },
+  "jackettHost": {
+    "title": "Jackett host",
+    "type": "string",
+    "default": "http://127.0.0.1:9117/"
+  },
+  "respTimeout": {
+    "title": "Response timeout",
+    "type": "number",
+    "default": 11000
+  },
+  "minimumSeeds": {
+    "title": "Minimum torrent seeds",
+    "type": "number",
+    "default": 3
+  },
+  "maximumResults": {
+    "title": "Maximum torrents for a response, 0 = no limit",
+    "type": "number",
+    "default": 15
+  },
+  "openTimeout": {
+    "title": "Requests open timeout",
+    "type": "number",
+    "default": 10000
+  },
+  "readTimeout": {
+    "title": "Requests read timeout",
+    "type": "number",
+    "default": 10000
+  }
+}

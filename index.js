@@ -37,7 +37,7 @@ const streamFromMagnet = (tor, uri, type, cb) => {
 
 module.exports = {
 	manifest: () => {
-		return { 
+		return Promise.resolve({ 
 		    "id": "org.stremio.jackett",
 		    "version": "1.0.0",
 
@@ -56,7 +56,7 @@ module.exports = {
 
 		    "catalogs": []
 
-		}
+		})
 	},
 	handler: (args, local) => {
 		modules.set(local.modules)

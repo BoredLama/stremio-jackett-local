@@ -1,5 +1,6 @@
 
-const modules = require('./modules')
+const needle = require('needle')
+const videoNameParser = require('video-name-parser')
 
 const ticker = {}
 
@@ -30,7 +31,7 @@ const helper = {
     followRedirect: (url, cb) => {
         if (!url.startsWith('magnet:')) {
             // follow redirect to see if the jackett url is a torrent link or a magnet link
-            modules.get.needle.get(url, (err, resp, body) => {
+            needle.get(url, (err, resp, body) => {
                 if (resp && resp.headers && resp.headers.location)
                     cb(resp.headers.location)
                 else
@@ -60,7 +61,7 @@ const helper = {
 
         // Warning: black magic ahead
 
-        const parsedName = modules.get['video-name-parser'](name + '.mp4')
+        const parsedName = videoNameParser(name + '.mp4')
 
         let extraTag = helper.simpleName(name)
 

@@ -1,9 +1,11 @@
-const modules = require('./modules')
 const jackettApi = require('./jackett')
 const helper = require('./helpers')
 
+const parseTorrent = require('parse-torrent')
+const async = require('async')
+const { cinemeta, config } = require('internal')
+
 const streamFromMagnet = (tor, uri, type, cb) => {
-	const parseTorrent = modules.get['parse-torrent']
     const toStream = (parsed) => {
 
         const infoHash = parsed.infoHash.toLowerCase()
@@ -35,141 +37,135 @@ const streamFromMagnet = (tor, uri, type, cb) => {
     }
 }
 
-module.exports = {
-	manifest: () => {
-		return Promise.resolve({ 
-		    "id": "org.stremio.jackett",
-		    "version": "1.0.0",
+const { addonBuilder, getInterface, getRouter } = require('stremio-addon-sdk')
 
-		    "name": "Jackett",
-		    "description": "Stremio Add-on to get torrent results from Jackett",
+const builder = new addonBuilder({
+    "id": "org.stremio.jackett",
+    "version": "1.0.0",
 
-		    "icon": "https://static1.squarespace.com/static/55c17e7ae4b08ccd27be814e/t/599b81c32994ca8ff6c1cd37/1508813048508/Jackett-logo-2.jpg",
+    "name": "Jackett",
+    "description": "Stremio Add-on to get torrent results from Jackett",
 
-		    "resources": [
-		        "stream"
-		    ],
+    "icon": "https://static1.squarespace.com/static/55c17e7ae4b08ccd27be814e/t/599b81c32994ca8ff6c1cd37/1508813048508/Jackett-logo-2.jpg",
 
-		    "types": ["movie", "series"],
+    "resources": [
+        "stream"
+    ],
 
-		    "idPrefixes": [ "tt" ],
+    "types": ["movie", "series"],
 
-		    "catalogs": []
+    "idPrefixes": [ "tt" ],
 
-		})
-	},
-	handler: (args, local) => {
-		modules.set(local.modules)
-		const config = local.config
-		const cinemeta = modules.get.internal.cinemeta
-		const async = modules.get.async
-		return new Promise((resolve, reject) => {
+    "catalogs": []
 
-			if (args.resource != 'stream'){
-				reject(new Error('Resource Unsupported'))
-				return
-			}
+})
 
-		    if (!args.id) {
-		        reject(new Error('No ID Specified'))
-		        return
-		    }
+builder.defineStreamHandler(args => {
+	return new Promise((resolve, reject) => {
 
-		    let results = []
+        if (!args.id) {
+            reject(new Error('No ID Specified'))
+            return
+        }
 
-		    let sentResponse = false
+        let results = []
 
-		    const respondStreams = () => {
+        let sentResponse = false
 
-		        if (sentResponse) return
-		        sentResponse = true
+        const respondStreams = () => {
 
-		        if (results && results.length) {
+            if (sentResponse) return
+            sentResponse = true
 
-		            tempResults = results
+            if (results && results.length) {
 
-		            // filter out torrents with less then 3 seeds
+                tempResults = results
 
-		            if (config.minimumSeeds)
-		                tempResults = tempResults.filter(el => { return !!(el.seeders && el.seeders > config.minimumSeeds -1) })
+                // filter out torrents with less then 3 seeds
 
-		            // order by seeds desc
+                if (config.minimumSeeds)
+                    tempResults = tempResults.filter(el => { return !!(el.seeders && el.seeders > config.minimumSeeds -1) })
 
-		            tempResults = tempResults.sort((a, b) => { return a.seeders < b.seeders ? 1 : -1 })
+                // order by seeds desc
 
-		            // limit to 15 results
+                tempResults = tempResults.sort((a, b) => { return a.seeders < b.seeders ? 1 : -1 })
 
-		            if (config.maximumResults)
-		                tempResults = tempResults.slice(0, config.maximumResults)
+                // limit to 15 results
 
-		            const streams = []
+                if (config.maximumResults)
+                    tempResults = tempResults.slice(0, config.maximumResults)
 
-		            const q = async.queue((task, callback) => {
-		                if (task && (task.magneturl || task.link)) {
-		                    const url = task.magneturl || task.link
-		                    // jackett links can sometimes redirect to magnet links or torrent files
-		                    // we follow the redirect if needed and bring back the direct link
-		                    helper.followRedirect(url, url => {
-		                        // convert torrents and magnet links to stream object
-		                        streamFromMagnet(task, url, args.type, stream => {
-		                            if (stream)
-		                                streams.push(stream)
-		                            callback()
-		                        })
-		                    })
-		                    return
-		                }
-		                callback()
-		            }, 1)
+                const streams = []
 
-		            q.drain = () => {
-		                resolve({ streams: streams })
-		            }
+                const q = async.queue((task, callback) => {
+                    if (task && (task.magneturl || task.link)) {
+                        const url = task.magneturl || task.link
+                        // jackett links can sometimes redirect to magnet links or torrent files
+                        // we follow the redirect if needed and bring back the direct link
+                        helper.followRedirect(url, url => {
+                            // convert torrents and magnet links to stream object
+                            streamFromMagnet(task, url, args.type, stream => {
+                                if (stream)
+                                    streams.push(stream)
+                                callback()
+                            })
+                        })
+                        return
+                    }
+                    callback()
+                }, 1)
 
-		            tempResults.forEach(elm => { q.push(elm) })
-		        } else {
-		            resolve({ streams: [] })
-		        }
-		    }
+                q.drain = () => {
+                    resolve({ streams: streams })
+                }
 
-		    const idParts = args.id.split(':')
+                tempResults.forEach(elm => { q.push(elm) })
+            } else {
+                resolve({ streams: [] })
+            }
+        }
 
-		    const imdb = idParts[0]
+        const idParts = args.id.split(':')
 
-		    cinemeta.get({ type: args.type, imdb }).then(meta => {
-		        if (meta) {
+        const imdb = idParts[0]
 
-		            const searchQuery = {
-		                name: meta.name,
-		                year: meta.year,
-		                type: args.type
-		            }
+        cinemeta.get({ type: args.type, imdb }).then(meta => {
+            if (meta) {
 
-		            if (idParts.length == 3) {
-		                searchQuery.season = idParts[1]
-		                searchQuery.episode = idParts[2]
-		            }
+                const searchQuery = {
+                    name: meta.name,
+                    year: meta.year,
+                    type: args.type
+                }
 
-		            jackettApi.search(config, searchQuery,
+                if (idParts.length == 3) {
+                    searchQuery.season = idParts[1]
+                    searchQuery.episode = idParts[2]
+                }
 
-		                partialResponse = (tempResults) => {
-		                    results = results.concat(tempResults)
-		                },
+                jackettApi.search(searchQuery,
 
-		                endResponse = (tempResults) => {
-		                    results = tempResults
-		                    respondStreams()
-		                })
+                    partialResponse = (tempResults) => {
+                        results = results.concat(tempResults)
+                    },
+
+                    endResponse = (tempResults) => {
+                        results = tempResults
+                        respondStreams()
+                    })
 
 
-		            if (config.responseTimeout)
-		                setTimeout(respondStreams, config.responseTimeout)
+                if (config.responseTimeout)
+                    setTimeout(respondStreams, config.responseTimeout)
 
-		        } else {
-		            resolve({ streams: [] })
-		        }
-		    })
+            } else {
+                resolve({ streams: [] })
+            }
+        })
 
-		})
-	}
-}
+    })
+})
+
+const addonInterface = getInterface(builder)
+
+module.exports = getRouter(addonInterface)

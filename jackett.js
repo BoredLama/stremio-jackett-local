@@ -1,15 +1,18 @@
-const modules = require('./modules')
 const helper = require('./helpers')
 
-const getIndexers = (config, cb) => {
+const needle = require('needle')
+const xmlJs = require('xml-js')
+const { config } = require('internal')
+
+const getIndexers = (cb) => {
 	const apiKey = config.jackettKey
-	modules.get.needle.get(config.jackettHost + 'api/v2.0/indexers/all/results/torznab/api?apikey='+apiKey+'&t=indexers&configured=true', {
+	needle.get(config.jackettHost + 'api/v2.0/indexers/all/results/torznab/api?apikey='+apiKey+'&t=indexers&configured=true', {
 		open_timeout: config.openTimeout,
 		read_timeout: config.readTimeout,
 		parse_response: false
 	}, (err, resp) => {
 		if (!err && resp && resp.body) {
-			let indexers = modules.get['xml-js'].xml2js(resp.body)
+			let indexers = xmlJs.xml2js(resp.body)
 
 			if (indexers && indexers.elements && indexers.elements[0] && indexers.elements[0].elements) {
 				indexers = indexers.elements[0].elements
@@ -25,9 +28,9 @@ const getIndexers = (config, cb) => {
 
 module.exports = {
 
-	search: (config, query, cb, end) => {
+	search: (query, cb, end) => {
 		const apiKey = config.jackettKey
-		getIndexers(config, (err, apiIndexers) => {
+		getIndexers((err, apiIndexers) => {
 			if (!err && apiIndexers && apiIndexers.length) {
 				// we don't handle anime cats yet
 				const cat = query.type && query.type == 'movie' ? 2000 : 5000
@@ -45,13 +48,13 @@ module.exports = {
 
 					apiIndexers.forEach(indexer => {
 						if (indexer && indexer.attributes && indexer.attributes.id) {
-							modules.get.needle.get(config.jackettHost + 'api/v2.0/indexers/'+indexer.attributes.id+'/results/torznab/api?apikey='+apiKey+'&t=search&cat='+cat+'&q='+encodeURI(searchQuery), {
+							needle.get(config.jackettHost + 'api/v2.0/indexers/'+indexer.attributes.id+'/results/torznab/api?apikey='+apiKey+'&t=search&cat='+cat+'&q='+encodeURI(searchQuery), {
 								open_timeout: config.openTimeout,
 								read_timeout: config.readTimeout,
 								parse_response: false
 							}, (err, resp) => {
 								if (!err && resp && resp.body) {
-									const tors = modules.get['xml-js'].xml2js(resp.body)
+									const tors = xmlJs.xml2js(resp.body)
 
 									// this is crazy, i know
 									if (tors.elements && tors.elements[0] && tors.elements[0].elements && tors.elements[0].elements[0] && tors.elements[0].elements[0].elements) {

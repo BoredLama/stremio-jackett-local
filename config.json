@@ -35,7 +35,7 @@
     "type": "number",
     "default": 10000
   },
-  "style": {
+  "dhtEnabled": {
     "title": "DHT Enabled",
     "type": "select",
     "options": ["True", "False"],

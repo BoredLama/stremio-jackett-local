@@ -16,11 +16,16 @@ const streamFromMagnet = (tor, uri, type, cb) => {
 
         title += '\r\n' + subtitle
 
+	let trackers = (parsed.announce || []).map(x => { return "tracker:"+x })
+
+        if (!config.dhtEnabled || config.dhtEnabled == 'True')
+            trackers = trackers.concat(["dht:"+infoHash])
+	    
         cb({
             name: tor.from,
             type: type,
             infoHash: infoHash,
-            sources: (parsed.announce || []).map(x => { return "tracker:"+x }).concat(["dht:"+infoHash]),
+            sources: trackers,
             title: title
         })
     }

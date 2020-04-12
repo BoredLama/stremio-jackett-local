@@ -18,16 +18,20 @@ const streamFromMagnet = (tor, uri, type, cb) => {
 
 	let trackers = (parsed.announce || []).map(x => { return "tracker:"+x })
 
-        if (!config.dhtEnabled || config.dhtEnabled == 'True')
+        if (trackers.length && (!config.dhtEnabled || config.dhtEnabled == 'True'))
             trackers = trackers.concat(["dht:"+infoHash])
-	    
-        cb({
+	
+	const streamObj = {
             name: tor.from,
             type: type,
             infoHash: infoHash,
-            sources: trackers,
             title: title
-        })
+        }
+	    
+	if (trackers.length)
+	    streamObj.sources = trackers
+
+	cb(streamObj)
     }
     if (uri.startsWith("magnet:?")) {
         toStream(parseTorrent(uri))

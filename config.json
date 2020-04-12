@@ -34,5 +34,11 @@
     "title": "Requests read timeout",
     "type": "number",
     "default": 10000
+  },
+  "style": {
+    "title": "DHT Enabled",
+    "type": "select",
+    "options": ["True", "False"],
+    "default": "True"
   }
 }

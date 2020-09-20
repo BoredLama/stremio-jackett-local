@@ -18,7 +18,7 @@
   "minimumSeeds": {
     "title": "Minimum torrent seeds",
     "type": "number",
-    "default": 3
+    "default": 1
   },
   "maximumResults": {
     "title": "Maximum torrents for a response, 0 = no limit",

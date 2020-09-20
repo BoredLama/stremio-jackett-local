@@ -90,7 +90,7 @@ builder.defineStreamHandler(args => {
 
                 tempResults = results
 
-                // filter out torrents with less then 3 seeds
+                // filter out torrents with less then 1 seed
 
                 if (config.minimumSeeds)
                     tempResults = tempResults.filter(el => { return !!(el.seeders && el.seeders > config.minimumSeeds -1) })

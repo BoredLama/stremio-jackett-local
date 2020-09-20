@@ -164,8 +164,8 @@ builder.defineStreamHandler(args => {
                     })
 
 
-                if (config.responseTimeout)
-                    setTimeout(respondStreams, config.responseTimeout)
+                if (config.respTimeout)
+                    setTimeout(respondStreams, config.respTimeout)
 
             } else {
                 resolve({ streams: [] })

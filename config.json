@@ -11,12 +11,12 @@
     "default": "http://127.0.0.1:9117/"
   },
   "respTimeout": {
-    "title": "Response timeout",
+    "title": "Response timeout, 0 = disabled",
     "type": "number",
     "default": 11000
   },
   "minimumSeeds": {
-    "title": "Minimum torrent seeds",
+    "title": "Minimum torrent seeds, 0 = disabled",
     "type": "number",
     "default": 1
   },
@@ -26,12 +26,12 @@
     "default": 15
   },
   "openTimeout": {
-    "title": "Requests open timeout",
+    "title": "Requests open timeout, 0 = disabled",
     "type": "number",
     "default": 10000
   },
   "readTimeout": {
-    "title": "Requests read timeout",
+    "title": "Requests read timeout, 0 = disabled",
     "type": "number",
     "default": 10000
   },
